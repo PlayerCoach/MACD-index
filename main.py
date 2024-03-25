@@ -262,8 +262,7 @@ def plot_macd_and_signal() -> None:
     plt.show()
 
 
-def plot_common_wallet_simulation(_ax1, _ax2, _data, _wallet_interpolated, _brute_force_wallet):
-
+def plot_common_wallet_simulation(_ax1, _ax2, _data, _wallet_interpolated, _brute_force_wallet, _fig):
     _color = 'tab:blue'
     _ax1.set_xlabel('Date')
     _ax1.set_ylabel('MACD Wallet', color=_color)
@@ -273,32 +272,27 @@ def plot_common_wallet_simulation(_ax1, _ax2, _data, _wallet_interpolated, _brut
     _ax2.set_ylabel('Hold Wallet', color=_color)
     _ax2.plot(_data['Date'], _brute_force_wallet, label='hold_wallet', color=_color, linewidth=0.5)
     _ax2.tick_params(axis='y', labelcolor=_color)
-    fig.tight_layout()
+    _fig.tight_layout()
     plt.title('Gain from both strategies')
     macd_wallet_legend = Line2D([0], [0], color='blue', linestyle='-', label=' MACD Wallet')
     hold_wallet_legend = Line2D([0], [0], color='red', linestyle='-', label='Hold Wallet')
     plt.legend(handles=[macd_wallet_legend, hold_wallet_legend], loc='upper left')
 
-
 def plot_macd_and_hold_investment() -> None:
     print(f"Final investment: {investment}")
     _fig, _ax1 = plt.subplots(figsize=(12, 6))
     _ax2 = _ax1.twinx()
-    plot_common_wallet_simulation(_ax1, _ax2, data, wallet_interpolated, brute_force_wallet)
+    plot_common_wallet_simulation(_ax1, _ax2, data, wallet_interpolated, brute_force_wallet, _fig)
     plt.show()
-
 
 def plot_macd_and_hold_investment_real_scale() -> None:
     _fig, _ax1 = plt.subplots(figsize=(12, 6))
     _ax2 = _ax1.twinx()
-    plot_common_wallet_simulation(_ax1, _ax2, data, wallet_interpolated, brute_force_wallet)
+    plot_common_wallet_simulation(_ax1, _ax2, data, wallet_interpolated, brute_force_wallet, _fig)
     lim_max = max(_ax1.get_ylim()[1], _ax2.get_ylim()[1])
     _ax1.set_ylim(0, lim_max)
     _ax2.set_ylim(0, lim_max)
     plt.show()
-
-
-
 
 
 if __name__ == '__main__':
@@ -320,45 +314,12 @@ if __name__ == '__main__':
     filtered_buy_signals = [x for x in buy_signals if not pd.isnull(x)]
     filtered_sell_signals = [x for x in sell_signals if not pd.isnull(x)]
 
-    investment, wallet, shares_wallet = simulate_investment(data, filtered_buy_signals, filtered_sell_signals)
-    print(f"Final investment: {investment}")
-
-
-    investment, wallet, shares_wallet = choose_heights_of_wallet_and_stocks(data, filtered_buy_signals,
-                                                                            filtered_sell_signals)
+    investment, wallet, shares_wallet = choose_heights_of_wallet_and_stocks(data, filtered_buy_signals, filtered_sell_signals)
     print(f"Final investment: {investment}")
     wallet_series = pd.Series(wallet)
     shares_wallet_series = pd.Series(shares_wallet)
-
-    # Interpolate NaN values in wallet and shares_wallet
     wallet_interpolated = wallet_series.interpolate(method='linear')
     shares_wallet_interpolated = shares_wallet_series.interpolate(method='linear')
-
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-
-    # Plot the wallet values on the first y-axis
-    color = 'tab:blue'
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('Wallet', color=color)
-    ax1.plot(data['Date'], wallet_interpolated, label='Wallet', color=color, linewidth=0.5)
-    ax1.tick_params(axis='y', labelcolor=color)
-
-    # Create a second y-axis that shares the same x-axis
-    ax2 = ax1.twinx()
-
-    # Plot the shares values on the second y-axis
-    color = 'tab:red'
-    ax2.set_ylabel('Shares', color=color)
-    ax2.plot(data['Date'], shares_wallet_interpolated, label='Shares', color=color, linewidth=0.5)
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    # Adjust the layout to prevent the y-labels from overlapping
-    fig.tight_layout()
-
-    # Display the plot
-    plt.title('Wallet and Shares value')
-    plt.legend()
-    plt.show()
 
     investment, brute_force_wallet = simulate_buy_and_hold(data)
     plot_macd_and_hold_investment_real_scale()
