@@ -4,14 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="13fd887c-fb8e-4e05-9e11-44caebc83bcd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/macd_with_intersections.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="13fd887c-fb8e-4e05-9e11-44caebc83bcd" name="Changes" comment="MACD plots, and signals">
+      <change afterPath="$PROJECT_DIR$/buy/buy_sell_simulation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/import_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/import_data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nflx_us_d.csv" beforeDir="false" afterPath="$PROJECT_DIR$/nflx_us_d.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nflx_us_w.csv" beforeDir="false" afterPath="$PROJECT_DIR$/nflx_us_w.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,8 +92,17 @@
       <option name="presentableId" value="Default" />
       <updated>1711301878387</updated>
       <workItem from="1711301893625" duration="3540000" />
-      <workItem from="1711312594701" duration="3753000" />
+      <workItem from="1711312594701" duration="8018000" />
     </task>
+    <task id="LOCAL-00001" summary="MACD plots, and signals">
+      <option name="closed" value="true" />
+      <created>1711316459007</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1711316459007</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -105,8 +110,10 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="MACD plots, and signals" />
+    <option name="LAST_COMMIT_MESSAGE" value="MACD plots, and signals" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Metody_Numeryczne_Proj1$main.coverage" NAME="main Coverage Results" MODIFIED="1711316342759" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Metody_Numeryczne_Proj1$main.coverage" NAME="main Coverage Results" MODIFIED="1711319531362" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
