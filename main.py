@@ -2,7 +2,9 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
+from pandas import Series
 
 from import_data import *
 
@@ -262,7 +264,14 @@ def plot_macd_and_signal() -> None:
     plt.show()
 
 
-def plot_common_wallet_simulation(_ax1, _ax2, _data, _wallet_interpolated, _brute_force_wallet, _fig):
+def plot_common_wallet_simulation(
+        _ax1: Axes,
+        _ax2: Axes,
+        _data: pd.DataFrame,
+        _wallet_interpolated: Series,
+        _brute_force_wallet: Series,
+        _fig: plt.Figure
+) -> None:
     _color = 'tab:blue'
     _ax1.set_xlabel('Date')
     _ax1.set_ylabel('MACD Wallet', color=_color)
@@ -278,12 +287,14 @@ def plot_common_wallet_simulation(_ax1, _ax2, _data, _wallet_interpolated, _brut
     hold_wallet_legend = Line2D([0], [0], color='red', linestyle='-', label='Hold Wallet')
     plt.legend(handles=[macd_wallet_legend, hold_wallet_legend], loc='upper left')
 
+
 def plot_macd_and_hold_investment() -> None:
     print(f"Final investment: {investment}")
     _fig, _ax1 = plt.subplots(figsize=(12, 6))
     _ax2 = _ax1.twinx()
     plot_common_wallet_simulation(_ax1, _ax2, data, wallet_interpolated, brute_force_wallet, _fig)
     plt.show()
+
 
 def plot_macd_and_hold_investment_real_scale() -> None:
     _fig, _ax1 = plt.subplots(figsize=(12, 6))
@@ -293,6 +304,144 @@ def plot_macd_and_hold_investment_real_scale() -> None:
     _ax1.set_ylim(0, lim_max)
     _ax2.set_ylim(0, lim_max)
     plt.show()
+
+
+def generate_macd_transactions_csv(_data: pd.DataFrame, _buy_signals: List[int], _sell_signals: List[int],
+                                   output_file: str) -> None:
+    # Create copies of the buy and sell signals lists to avoid modifying the original lists
+    buy_signals_copy = _buy_signals.copy()
+    sell_signals_copy = _sell_signals.copy()
+
+    transactions = []
+    for buy_index in buy_signals_copy:
+        buy_date = _data['Date'].iloc[buy_index]
+        buy_cost = _data['Close'].iloc[buy_index]
+        for sell_index in sell_signals_copy:
+            if sell_index > buy_index:
+                sell_date = _data['Date'].iloc[sell_index]
+                sell_cost = _data['Close'].iloc[sell_index]
+                profit = sell_cost - buy_cost
+                transactions.append({
+                    'Buy Date': buy_date,
+                    'Buy Cost': buy_cost,
+                    'Sell Date': sell_date,
+                    'Sell Cost': sell_cost,
+                    'Profit': profit
+                })
+                # Remove the sell signal to avoid processing it again
+                sell_signals_copy.remove(sell_index)
+                break  # Exit the inner loop after processing a sell signal
+
+    # Convert the transactions list to a DataFrame
+    transactions_df = pd.DataFrame(transactions)
+
+    # Write the DataFrame to a CSV file
+    transactions_df.to_csv(output_file, index=False)
+
+    print(f"MACD transactions CSV file '{output_file}' has been created.")
+
+
+def find_most_profitable_transaction(_data: pd.DataFrame, _buy_signals: List[int], _sell_signals: List[int]) -> dict:
+    sell_signals_copy = _sell_signals.copy()
+    most_profitable = {'Profit': float('-inf'), 'Transaction': None, 'Buy Index': None, 'Sell Index': None}
+    for buy_index in _buy_signals:
+        for sell_index in sell_signals_copy:
+            if sell_index > buy_index:  # Ensure sell signal occurs after buy signal
+                buy_date = _data['Date'].iloc[buy_index]
+                buy_cost = _data['Close'].iloc[buy_index]
+                sell_date = _data['Date'].iloc[sell_index]
+                sell_cost = _data['Close'].iloc[sell_index]
+                profit = sell_cost - buy_cost
+                if profit > most_profitable['Profit']:
+                    most_profitable = {
+                        'Buy Date': buy_date,
+                        'Buy Cost': buy_cost,
+                        'Sell Date': sell_date,
+                        'Sell Cost': sell_cost,
+                        'Profit': profit,
+                        'Buy Index': buy_index,
+                        'Sell Index': sell_index
+                    }
+                # Remove the sell signal to avoid processing it again
+                sell_signals_copy.remove(sell_index)
+                break  # Exit the inner loop after processing a sell signal
+    return most_profitable
+
+
+def find_least_profitable_transaction(_data: pd.DataFrame, _buy_signals: List[int], _sell_signals: List[int]) -> dict:
+    sell_signals_copy = _sell_signals.copy()
+
+    least_profitable = {'Profit': float('inf'), 'Transaction': None, 'Buy Index': None, 'Sell Index': None}
+    for buy_index in _buy_signals:
+        for sell_index in sell_signals_copy:  # Use the copy for iteration
+            if sell_index > buy_index:  # Ensure sell signal occurs after buy signal
+                buy_date = _data['Date'].iloc[buy_index]
+                buy_cost = _data['Close'].iloc[buy_index]
+                sell_date = _data['Date'].iloc[sell_index]
+                sell_cost = _data['Close'].iloc[sell_index]
+                profit = sell_cost - buy_cost
+                if profit < least_profitable['Profit']:
+                    least_profitable = {
+                        'Buy Date': buy_date,
+                        'Buy Cost': buy_cost,
+                        'Sell Date': sell_date,
+                        'Sell Cost': sell_cost,
+                        'Profit': profit,
+                        'Buy Index': buy_index,
+                        'Sell Index': sell_index
+                    }
+                # Remove the sell signal from the copy to avoid processing it again
+                sell_signals_copy.remove(sell_index)
+                break  # Exit the inner loop after processing a sell signal
+    return least_profitable
+
+
+def plot_transaction(_data: pd.DataFrame, transaction: dict, title: str) -> None:
+    # Calculate the start and end indices for the plot
+    start_index = max(0, transaction['Buy Index'] - 5)
+    end_index = min(len(_data) - 1, transaction['Sell Index'] + 5)
+
+    # Slice the data to include the relevant segment
+    relevant_data = _data.iloc[start_index:end_index + 1]
+
+    plt.figure(figsize=(12, 6))
+
+    # Plot the entire stock price range in a lighter color
+    plt.plot(relevant_data['Date'], relevant_data['Close'], label='Close Price', color='lightgray', alpha=0.5)
+
+    # Overlay the transaction period in a darker color
+    plt.plot(relevant_data['Date'], relevant_data['Close'], label='Transaction Period', color='black')
+
+    # Plot the buy and sell signals within the relevant data segment
+    plt.scatter(relevant_data['Date'].iloc[transaction['Buy Index'] - start_index], transaction['Buy Cost'],
+                color='green', marker='^', label='Buy Signal')
+    plt.scatter(relevant_data['Date'].iloc[transaction['Sell Index'] - start_index], transaction['Sell Cost'],
+                color='red', marker='v', label='Sell Signal')
+
+    plt.xlabel('Date')
+    plt.ylabel('Close Price')
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
+
+def plot_most_profitable_transaction(_data: pd.DataFrame, _buy_signals: List[int], _sell_signals: List[int]) -> None:
+    most_profitable = find_most_profitable_transaction(_data, _buy_signals, _sell_signals)
+    print(f"Most Profitable Transaction Profit: {most_profitable['Profit']:.2f}")
+    print(f"Buy Date: {most_profitable['Buy Date']}")
+    print(f"Sell Date: {most_profitable['Sell Date']}")
+    plot_transaction(_data, most_profitable, 'Most Profitable Transaction')
+
+
+def plot_least_profitable_transaction(_data: pd.DataFrame, _buy_signals: List[int], _sell_signals: List[int]) -> None:
+    least_profitable = find_least_profitable_transaction(_data, _buy_signals, _sell_signals)
+    if 'Buy Date' in least_profitable:
+        print(f"Least Profitable Transaction Profit: {least_profitable['Profit']:.2f}")
+        print(f"Buy Date: {least_profitable['Buy Date']}")
+        print(f"Sell Date: {least_profitable['Sell Date']}")
+        plot_transaction(_data, least_profitable, 'Least Profitable Transaction')
+    else:
+        print("No least profitable transaction found.")
 
 
 if __name__ == '__main__':
@@ -314,7 +463,10 @@ if __name__ == '__main__':
     filtered_buy_signals = [x for x in buy_signals if not pd.isnull(x)]
     filtered_sell_signals = [x for x in sell_signals if not pd.isnull(x)]
 
-    investment, wallet, shares_wallet = choose_heights_of_wallet_and_stocks(data, filtered_buy_signals, filtered_sell_signals)
+    generate_macd_transactions_csv(data, filtered_buy_signals, filtered_sell_signals, 'macd_transactions.csv')
+
+    investment, wallet, shares_wallet = choose_heights_of_wallet_and_stocks(data, filtered_buy_signals,
+                                                                            filtered_sell_signals)
     print(f"Final investment: {investment}")
     wallet_series = pd.Series(wallet)
     shares_wallet_series = pd.Series(shares_wallet)
@@ -324,6 +476,12 @@ if __name__ == '__main__':
     investment, brute_force_wallet = simulate_buy_and_hold(data)
     plot_macd_and_hold_investment_real_scale()
     plot_macd_and_hold_investment()
+    plot_most_profitable_transaction(data, filtered_buy_signals, filtered_sell_signals)
+    plot_least_profitable_transaction(data, filtered_buy_signals, filtered_sell_signals)
 
+    data = pd.read_csv('macd_transactions.csv')
 
+    # Calculate the sum of the 'Profit' column
+    total_profit = data['Profit'].sum()
 
+    print(f"Total Profit: {total_profit}")
