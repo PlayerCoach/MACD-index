@@ -156,16 +156,30 @@ def plot_nicer_wallet_and_shares(data,buy_singal,sell_singals):
 def simulate_investment_bruteforce(data, buy_signals, sell_signals):
     investment = 1000
     shares = 0
+    # Initialize brute_force_wallet as a list of NaN values with the same length as the 'Date' column
+    brute_force_wallet = [np.nan] * len(data)
+    # Set the initial investment value
+    brute_force_wallet[0] = investment
+    # Calculate the number of shares bought with the initial investment
     shares = investment / data["Close"].iloc[0]
+    # Update the investment value after buying shares
     investment = investment - shares * data["Close"].iloc[0]
+    # Update the investment value after selling shares
     investment = investment + shares * data["Close"].iloc[-1]
+    # Set the final investment value
+    brute_force_wallet[-1] = investment
     shares = 0
 
-    return investment
+    # Convert brute_force_wallet to a pandas Series for interpolation
+    brute_force_wallet_series = pd.Series(brute_force_wallet)
+    # Interpolate NaN values in brute_force_wallet_series
+    brute_force_wallet_interpolated = brute_force_wallet_series.interpolate(method='linear')
+
+    return investment, brute_force_wallet_interpolated
 
 
 if __name__ == '__main__':
-    weekly = get_weekly()
+    weekly = get_daily()
     data = weekly.copy(deep=True)
     short_window = 12
     long_window = 26
@@ -278,6 +292,37 @@ if __name__ == '__main__':
     plt.title('Wallet and Shares value')
     plt.legend()
     plt.show()
+
+    investment, brute_force_wallet = simulate_investment_bruteforce(data, filtered_buy_signals, filtered_sell_signals)
+    print(f"Final investment: {investment}")
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # Plot the wallet values on the first y-axis
+    color = 'tab:blue'
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Wallet', color=color)
+    ax1.plot(data['Date'], wallet_interpolated, label='Wallet', color=color, linewidth=0.5)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    # Create a second y-axis that shares the same x-axis
+    ax2 = ax1.twinx()
+
+    # Plot the shares values on the second y-axis
+    color = 'tab:red'
+    ax2.set_ylabel('Shares', color=color)
+    ax2.plot(data['Date'], brute_force_wallet, label='Shares', color=color, linewidth=0.5)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    # Adjust the layout to prevent the y-labels from overlapping
+    fig.tight_layout()
+
+    # Display the plot
+    plt.title('Wallet and Shares value')
+    plt.legend()
+    plt.show()
+
+
+
 
 
 
